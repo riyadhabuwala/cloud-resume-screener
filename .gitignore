@@ -1,0 +1,60 @@
+# =============================
+# Node / Next.js
+# =============================
+node_modules/
+.next/
+out/
+
+# Build / logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files (keep examples)
+.env
+.env.*
+!.env.example
+!frontend/.env.local.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Lambda packaging artifacts
+*.zip
+
+# Ignore vendored Lambda dependencies from pip install -t .
+# Keep only source and requirements files under lambda/.
+lambda/**
+!lambda/
+!lambda/process_resume/
+!lambda/get_results/
+!lambda/get_upload_url/
+!lambda/process_resume/lambda_function.py
+!lambda/process_resume/pdf_extractor.py
+!lambda/process_resume/groq_screener.py
+!lambda/process_resume/dynamo_helper.py
+!lambda/process_resume/requirements.txt
+!lambda/get_results/lambda_function.py
+!lambda/get_results/requirements.txt
+!lambda/get_upload_url/lambda_function.py
+!lambda/get_upload_url/requirements.txt
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+coverage/
+*.tmp
