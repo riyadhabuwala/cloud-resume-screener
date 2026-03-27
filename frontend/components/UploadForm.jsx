@@ -52,7 +52,13 @@ export default function UploadForm() {
       await Promise.all(
         files.map(async (file) => {
           const payload = await getUploadUrl(file.name, jobDescription.trim());
-          const putUrl = payload.upload_url;
+          const putUrl = payload?.upload_url;
+
+          // Stop early with a clear error if backend did not return a presigned URL.
+          if (!putUrl) {
+            const backendMessage = payload?.message || 'Upload URL was not returned by API.';
+            throw new Error(backendMessage);
+          }
 
           await uploadPdfToS3(putUrl, file, (percent) => {
             setUploadProgress((prev) => ({ ...prev, [file.name]: percent }));

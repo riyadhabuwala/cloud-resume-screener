@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import tempfile
 from typing import Any, Dict
@@ -11,7 +12,9 @@ from pdf_extractor import extract_text_from_pdf
 
 
 # Reuse the S3 client across invocations.
-s3_client = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "us-east-1"))
+s3_client = boto3.client("s3", region_name=os.environ.get("AWS_REGION_NAME", "us-east-1"))
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def _extract_resume_identity(object_key: str) -> Dict[str, str]:
@@ -51,6 +54,7 @@ def _normalize_result(
 def lambda_handler(event, context):
     """Handle S3 PUT events, screen uploaded resumes, and persist results."""
     records = event.get("Records", [])
+    logger.info("process_resume invoked with %s record(s)", len(records))
 
     for record in records:
         s3_info = record.get("s3", {})
@@ -64,6 +68,7 @@ def lambda_handler(event, context):
         identity = _extract_resume_identity(object_key)
         resume_id = identity["resume_id"]
         resume_name = identity["resume_name"]
+        logger.info("Processing resume_id=%s object_key=%s", resume_id, object_key)
 
         existing = get_resume_item(resume_id) or {}
         uploaded_at = existing.get("uploaded_at", now_iso())
@@ -87,11 +92,8 @@ def lambda_handler(event, context):
             if not resume_text:
                 raise ValueError("No text could be extracted from the PDF.")
 
-            # Retry the Groq call once if the first attempt fails.
-            try:
-                model_output = screen_resume(job_description, resume_text)
-            except Exception:
-                model_output = screen_resume(job_description, resume_text)
+            # Execute one model call; failures are captured below and persisted.
+            model_output = screen_resume(job_description, resume_text)
 
             result_item = _normalize_result(
                 resume_id=resume_id,
@@ -100,6 +102,7 @@ def lambda_handler(event, context):
                 model_output=model_output,
             )
             put_result(result_item)
+            logger.info("Completed screening resume_id=%s", resume_id)
 
         except GroqJSONParseError as decode_error:
             # Persist raw model output text when JSON parsing fails.
@@ -111,6 +114,7 @@ def lambda_handler(event, context):
                 raw_response=decode_error.raw_response,
             )
             put_result(failed_item)
+            logger.exception("Groq JSON parsing failed for resume_id=%s", resume_id)
 
         except Exception as error:
             # Persist extraction/API/general failures with consistent schema.
@@ -121,6 +125,7 @@ def lambda_handler(event, context):
                 uploaded_at=uploaded_at,
             )
             put_result(failed_item)
+            logger.exception("Resume screening failed for resume_id=%s", resume_id)
 
         finally:
             # Clean up temporary file storage to avoid filling /tmp.
@@ -128,6 +133,7 @@ def lambda_handler(event, context):
                 os.remove(temp_file_path)
 
     # Return a simple batch-processing response for CloudWatch visibility.
+    logger.info("process_resume finished")
     return {
         "statusCode": 200,
         "body": json.dumps({"message": "Processed S3 event batch."})

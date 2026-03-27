@@ -5,8 +5,21 @@ from typing import Any, Dict
 from groq import Groq
 
 
-# Initialize Groq client once per Lambda container for better performance.
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
+_client = None
+
+
+def _get_client() -> Groq:
+    """Create/reuse Groq client while validating required API credentials."""
+    global _client
+    if _client is not None:
+        return _client
+
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    if not api_key:
+        raise ValueError("GROQ_API_KEY is not set in Lambda environment variables.")
+
+    _client = Groq(api_key=api_key)
+    return _client
 
 
 class GroqJSONParseError(Exception):
@@ -19,6 +32,7 @@ class GroqJSONParseError(Exception):
 
 def screen_resume(job_description: str, resume_text: str) -> Dict[str, Any]:
     """Send the resume and job description to Groq and parse strict JSON output."""
+    client = _get_client()
     completion = client.chat.completions.create(
         model="openai/gpt-oss-120b",
         messages=[
@@ -52,10 +66,9 @@ exact structure:
 """
             }
         ],
-        temperature=1,
-        max_completion_tokens=8192,
+        temperature=0.2,
+        max_tokens=1024,
         top_p=1,
-        reasoning_effort="medium",
         stream=False,
         stop=None
     )

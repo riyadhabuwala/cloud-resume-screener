@@ -7,7 +7,7 @@ import boto3
 
 
 # Create DynamoDB table handle once for warm Lambda reuse.
-region = os.environ.get("AWS_REGION", "us-east-1")
+region = os.environ.get("AWS_REGION_NAME", "us-east-1")
 dynamodb = boto3.resource("dynamodb", region_name=region)
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "ResumeResults"))
 
@@ -32,7 +32,11 @@ def _json_default_serializer(value: Any):
 
 def lambda_handler(event, context):
     """Serve GET /results by scanning ResumeResults and sorting by score."""
-    method = (event.get("httpMethod") or "").upper()
+    method = (
+        event.get("httpMethod")
+        or event.get("requestContext", {}).get("http", {}).get("method")
+        or ""
+    ).upper()
 
     # Reply early to CORS preflight checks.
     if method == "OPTIONS":
@@ -68,6 +72,7 @@ def lambda_handler(event, context):
                 "missing_skills": item.get("missing_skills", []) or [],
                 "uploaded_at": item.get("uploaded_at", ""),
                 "status": item.get("status", "processing"),
+                "error": item.get("error", ""),
             }
             for item in items
         ]

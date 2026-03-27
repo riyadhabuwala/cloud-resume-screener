@@ -8,7 +8,7 @@ import boto3
 
 
 # Initialize AWS clients/resources once for better Lambda performance.
-region = os.environ.get("AWS_REGION", "us-east-1")
+region = os.environ.get("AWS_REGION_NAME", "us-east-1")
 s3_client = boto3.client("s3", region_name=region)
 dynamodb = boto3.resource("dynamodb", region_name=region)
 table = dynamodb.Table(os.environ.get("DYNAMODB_TABLE", "ResumeResults"))
@@ -36,7 +36,11 @@ def _now_iso() -> str:
 
 def lambda_handler(event, context):
     """Handle POST /get-upload-url to create a presigned S3 PUT URL per resume file."""
-    method = (event.get("httpMethod") or "").upper()
+    method = (
+        event.get("httpMethod")
+        or event.get("requestContext", {}).get("http", {}).get("method")
+        or ""
+    ).upper()
 
     # Respond to browser preflight request.
     if method == "OPTIONS":
@@ -46,6 +50,11 @@ def lambda_handler(event, context):
             "body": json.dumps({"message": "CORS preflight OK"}),
         }
 
+    # Some API Gateway integrations omit method details in the event payload.
+    # This Lambda only serves one write action, so treat missing method as POST.
+    if not method:
+        method = "POST"
+
     if method != "POST":
         return {
             "statusCode": 405,
@@ -54,7 +63,14 @@ def lambda_handler(event, context):
         }
 
     try:
-        body = json.loads(event.get("body") or "{}")
+        # Handle both plain JSON body and base64-encoded API Gateway payloads.
+        raw_body = event.get("body") or "{}"
+        if event.get("isBase64Encoded"):
+            import base64
+
+            raw_body = base64.b64decode(raw_body).decode("utf-8")
+
+        body = json.loads(raw_body)
         filename = body.get("filename", "")
         job_description = body.get("job_description", "").strip()
 

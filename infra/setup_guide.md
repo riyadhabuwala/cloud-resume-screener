@@ -61,12 +61,12 @@ Set these variables:
 
 ### get_results
 - `DYNAMODB_TABLE=ResumeResults`
-- `AWS_REGION=us-east-1`
+- `AWS_REGION_NAME=us-east-1`
 
 ### get_upload_url
 - `DYNAMODB_TABLE=ResumeResults`
 - `S3_BUCKET=resume-screener-bucket`
-- `AWS_REGION=us-east-1`
+- `AWS_REGION_NAME=us-east-1`
 
 ## 8. Package and deploy Lambda ZIPs
 Run from project root:

@@ -3,6 +3,18 @@ import axios from 'axios';
 // Build all API requests from environment variable base URL.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+function unwrapApiGatewayPayload(data) {
+  // Support both direct JSON responses and Lambda-proxy wrapped responses.
+  if (data && typeof data === 'object' && typeof data.body === 'string') {
+    try {
+      return JSON.parse(data.body);
+    } catch {
+      return data;
+    }
+  }
+  return data;
+}
+
 if (!API_BASE_URL) {
   // This warning helps diagnose misconfigured frontend environments quickly.
   // eslint-disable-next-line no-console
@@ -22,7 +34,7 @@ export async function getUploadUrl(filename, jobDescription) {
     }
   );
 
-  return response.data;
+  return unwrapApiGatewayPayload(response.data);
 }
 
 export async function uploadPdfToS3(uploadUrl, file, onProgress) {
@@ -42,5 +54,5 @@ export async function getResults() {
   const response = await axios.get(`${API_BASE_URL}/results`, {
     headers: { 'Content-Type': 'application/json' }
   });
-  return response.data;
+  return unwrapApiGatewayPayload(response.data);
 }

@@ -10,7 +10,6 @@ module.exports = {
     extend: {
       colors: {
         ink: '#0b1020',
-        slate: '#111a2d',
         mist: '#9fb4d1',
         glow: '#52d3ff',
         mint: '#22c55e',

@@ -6,7 +6,7 @@ import boto3
 
 
 # Create DynamoDB resources once and reuse across warm Lambda invocations.
-region = os.environ.get("AWS_REGION", "us-east-1")
+region = os.environ.get("AWS_REGION_NAME", "us-east-1")
 dynamodb = boto3.resource("dynamodb", region_name=region)
 table = dynamodb.Table(os.environ["DYNAMODB_TABLE"])
 

@@ -83,6 +83,15 @@ export default function ResultCard({ item }) {
           <SkillTags title="Skill Match" items={item.skill_match} type="match" />
           <SkillTags title="Missing Skills" items={item.missing_skills} type="missing" />
         </div>
+
+        {item.status === 'failed' && item.error && (
+          <div className="border-t border-slate-700/70 p-6">
+            <h4 className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-mist">Error Details</h4>
+            <div className="rounded-lg border border-rose/40 bg-rose/10 p-3 text-sm text-rose-200">
+              {item.error}
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );

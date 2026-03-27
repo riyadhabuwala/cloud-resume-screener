@@ -175,12 +175,12 @@ Create and attach a Lambda execution role with:
 | process_resume Lambda | `JOB_DESCRIPTION` | `Senior backend engineer ...` |
 | process_resume Lambda | `DYNAMODB_TABLE` | `ResumeResults` |
 | process_resume Lambda | `S3_BUCKET` | `resume-screener-bucket` |
-| process_resume Lambda | `AWS_REGION` | `us-east-1` |
+| process_resume Lambda | `AWS_REGION_NAME` | `us-east-1` |
 | get_results Lambda | `DYNAMODB_TABLE` | `ResumeResults` |
 | get_results Lambda | `AWS_REGION` | `us-east-1` |
 | get_upload_url Lambda | `DYNAMODB_TABLE` | `ResumeResults` |
 | get_upload_url Lambda | `S3_BUCKET` | `resume-screener-bucket` |
-| get_upload_url Lambda | `AWS_REGION` | `us-east-1` |
+| get_upload_url Lambda | `AWS_REGION_NAME` | `us-east-1` |
 | Frontend | `NEXT_PUBLIC_API_BASE_URL` | `https://your-api-gateway-url.amazonaws.com/prod` |
 
 ## How It Works
